@@ -147,7 +147,8 @@ export default class VueRouter {
         setupListeners
       )
     }
-
+    // 由于history的current并不是响应式的，只是在更新之后调用了回调函数cb   cb即需要通过listen加入
+    // 然后就可以在回调函数中修改实例中的  监听过的数据 __route  就是新的 $route
     history.listen(route => {
       this.apps.forEach(app => {
         // _route  是利用Vue util定义的响应式属性，所以会通知到使用的地方进行更新
