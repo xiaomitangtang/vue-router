@@ -7,11 +7,11 @@ import { fillParams } from './params'
 import { warn } from './warn'
 import { extend } from './misc'
 
-export function normalizeLocation (
-  raw: RawLocation,
-  current: ?Route,
-  append: ?boolean,
-  router: ?VueRouter
+export function normalizeLocation(
+  raw: RawLocation,// ro  
+  current: ?Route,  //current
+  append: ?boolean, //append  
+  router: ?VueRouter// router 实例
 ): Location {
   let next: Location = typeof raw === 'string' ? { path: raw } : raw
   // named target
@@ -42,7 +42,7 @@ export function normalizeLocation (
     }
     return next
   }
-
+  // { path,  query, hash   }
   const parsedPath = parsePath(next.path || '')
   const basePath = (current && current.path) || '/'
   const path = parsedPath.path

@@ -10,12 +10,14 @@ export default {
       default: 'default'
     }
   },
-  render (_, { props, children, parent, data }) {
+  // 函数组件   接受  createElement 和ctx  作为参数
+  render(_, { props, children, parent, data }) {
     // used by devtools to display a router-view badge
     data.routerView = true
 
     // directly use parent context's createElement() function
     // so that components rendered by router-view can resolve named slots
+    // 函数组件没有很多东西，所以去父组件中取
     const h = parent.$createElement
     const name = props.name
     const route = parent.$route
@@ -25,8 +27,10 @@ export default {
     // has been toggled inactive but kept-alive.
     let depth = 0
     let inactive = false
+    // 只要父组件不是根组件就继续遍历
     while (parent && parent._routerRoot !== parent) {
       const vnodeData = parent.$vnode ? parent.$vnode.data : {}
+      // 只要发现routerView  就把深度加一。。。。以匹配嵌套路由
       if (vnodeData.routerView) {
         depth++
       }
@@ -79,11 +83,11 @@ export default {
       }
     }
 
-    // also register instance in prepatch hook
-    // in case the same component instance is reused across different routes
-    ;(data.hook || (data.hook = {})).prepatch = (_, vnode) => {
-      matched.instances[name] = vnode.componentInstance
-    }
+      // also register instance in prepatch hook
+      // in case the same component instance is reused across different routes
+      ; (data.hook || (data.hook = {})).prepatch = (_, vnode) => {
+        matched.instances[name] = vnode.componentInstance
+      }
 
     // register instance in init hook
     // in case kept-alive component be actived when routes changed
@@ -110,7 +114,7 @@ export default {
   }
 }
 
-function fillPropsinData (component, data, route, configProps) {
+function fillPropsinData(component, data, route, configProps) {
   // resolve props
   let propsToPass = data.props = resolveProps(route, configProps)
   if (propsToPass) {
@@ -127,7 +131,7 @@ function fillPropsinData (component, data, route, configProps) {
   }
 }
 
-function resolveProps (route, config) {
+function resolveProps(route, config) {
   switch (typeof config) {
     case 'undefined':
       return

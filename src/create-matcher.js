@@ -13,25 +13,29 @@ export type Matcher = {
   addRoutes: (routes: Array<RouteConfig>) => void;
 };
 
-export function createMatcher (
+export function createMatcher(
   routes: Array<RouteConfig>,
   router: VueRouter
 ): Matcher {
+  // 根据传递的routes  递归加入生成一个  path列表，并把*放在最后
   const { pathList, pathMap, nameMap } = createRouteMap(routes)
 
-  function addRoutes (routes) {
+  // addRoutes就是继续加路由，，，
+  function addRoutes(routes) {
     createRouteMap(routes, pathList, pathMap, nameMap)
   }
 
-  function match (
+  function match(
     raw: RawLocation,
     currentRoute?: Route,
     redirectedFrom?: Location
   ): Route {
+    // 调用match的时候是新建一个route对象，该对象有一个matched    matched是通过recoed  由下至上parent 组成的数组  嵌套路由比较有用
     const location = normalizeLocation(raw, currentRoute, false, router)
     const { name } = location
 
     if (name) {
+      //如果解析到了名字属性，直接通过名字查找    record
       const record = nameMap[name]
       if (process.env.NODE_ENV !== 'production') {
         warn(record, `Route with name '${name}' does not exist`)
@@ -60,6 +64,8 @@ export function createMatcher (
       for (let i = 0; i < pathList.length; i++) {
         const path = pathList[i]
         const record = pathMap[path]
+        // 内部通过 record的正则表达式进行匹配 判断是不是目标路由  如果是  就通过record 生成新的$route   
+        // $route 不是  record   扩展了很多东西  比如  matched
         if (matchRoute(record.regex, location.path, location.params)) {
           return _createRoute(record, location, redirectedFrom)
         }
@@ -69,7 +75,7 @@ export function createMatcher (
     return _createRoute(null, location)
   }
 
-  function redirect (
+  function redirect(
     record: RouteRecord,
     location: Location
   ): Route {
@@ -131,7 +137,7 @@ export function createMatcher (
     }
   }
 
-  function alias (
+  function alias(
     record: RouteRecord,
     location: Location,
     matchAs: string
@@ -150,7 +156,7 @@ export function createMatcher (
     return _createRoute(null, location)
   }
 
-  function _createRoute (
+  function _createRoute(
     record: ?RouteRecord,
     location: Location,
     redirectedFrom?: Location
@@ -170,7 +176,7 @@ export function createMatcher (
   }
 }
 
-function matchRoute (
+function matchRoute(
   regex: RouteRegExp,
   path: string,
   params: Object
@@ -195,6 +201,6 @@ function matchRoute (
   return true
 }
 
-function resolveRecordPath (path: string, record: RouteRecord): string {
+function resolveRecordPath(path: string, record: RouteRecord): string {
   return resolvePath(path, record.parent ? record.parent.path : '/', true)
 }

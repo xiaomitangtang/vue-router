@@ -17,7 +17,12 @@ import { AbstractHistory } from './history/abstract'
 import type { Matcher } from './create-matcher'
 
 import { isNavigationFailure, NavigationFailureType } from './util/errors'
-
+/**
+ new Router({
+   mode,
+   routes:[{component,children,path,name,hook}]
+ })
+ */
 export default class VueRouter {
   static install: () => void
   static version: string
@@ -37,21 +42,27 @@ export default class VueRouter {
   resolveHooks: Array<?NavigationGuard>
   afterHooks: Array<?AfterNavigationHook>
 
-  constructor (options: RouterOptions = {}) {
+  constructor(options: RouterOptions = {}) {
     this.app = null
     this.apps = []
     this.options = options
     this.beforeHooks = []
     this.resolveHooks = []
     this.afterHooks = []
+    // 建立一个路由path 组件映射
     this.matcher = createMatcher(options.routes || [], this)
 
     let mode = options.mode || 'hash'
+    // 浏览器不支持history。pushstate  是否回退到hash模式 
+    // 如果设置类型为history  并且浏览器不支持history  也没有显式定义false 就更改为hash
+
+    // 在不支持pushstate的浏览器环境  会catch  到  replace asign两个函数刷新页面
     this.fallback =
       mode === 'history' && !supportsPushState && options.fallback !== false
     if (this.fallback) {
       mode = 'hash'
     }
+    // 如果不在浏览器中  
     if (!inBrowser) {
       mode = 'abstract'
     }
@@ -74,20 +85,21 @@ export default class VueRouter {
     }
   }
 
-  match (raw: RawLocation, current?: Route, redirectedFrom?: Location): Route {
+  match(raw: RawLocation, current?: Route, redirectedFrom?: Location): Route {
+    // raw  就是   to  
     return this.matcher.match(raw, current, redirectedFrom)
   }
 
-  get currentRoute (): ?Route {
+  get currentRoute(): ?Route {
     return this.history && this.history.current
   }
 
-  init (app: any /* Vue component instance */) {
+  init(app: any /* Vue component instance */) {
     process.env.NODE_ENV !== 'production' &&
       assert(
         install.installed,
         `not installed. Make sure to call \`Vue.use(VueRouter)\` ` +
-          `before creating root instance.`
+        `before creating root instance.`
       )
 
     this.apps.push(app)
@@ -138,32 +150,33 @@ export default class VueRouter {
 
     history.listen(route => {
       this.apps.forEach(app => {
+        // _route  是利用Vue util定义的响应式属性，所以会通知到使用的地方进行更新
         app._route = route
       })
     })
   }
-
-  beforeEach (fn: Function): Function {
+  // pust到监听队列中，返回一个函数，移除监听函数
+  beforeEach(fn: Function): Function {
     return registerHook(this.beforeHooks, fn)
   }
 
-  beforeResolve (fn: Function): Function {
+  beforeResolve(fn: Function): Function {
     return registerHook(this.resolveHooks, fn)
   }
 
-  afterEach (fn: Function): Function {
+  afterEach(fn: Function): Function {
     return registerHook(this.afterHooks, fn)
   }
 
-  onReady (cb: Function, errorCb?: Function) {
+  onReady(cb: Function, errorCb?: Function) {
     this.history.onReady(cb, errorCb)
   }
 
-  onError (errorCb: Function) {
+  onError(errorCb: Function) {
     this.history.onError(errorCb)
   }
 
-  push (location: RawLocation, onComplete?: Function, onAbort?: Function) {
+  push(location: RawLocation, onComplete?: Function, onAbort?: Function) {
     // $flow-disable-line
     if (!onComplete && !onAbort && typeof Promise !== 'undefined') {
       return new Promise((resolve, reject) => {
@@ -174,8 +187,9 @@ export default class VueRouter {
     }
   }
 
-  replace (location: RawLocation, onComplete?: Function, onAbort?: Function) {
-    // $flow-disable-line
+  replace(location: RawLocation, onComplete?: Function, onAbort?: Function) {
+    // $flow-disable-line 
+    // onComplete onAbort
     if (!onComplete && !onAbort && typeof Promise !== 'undefined') {
       return new Promise((resolve, reject) => {
         this.history.replace(location, resolve, reject)
@@ -185,19 +199,19 @@ export default class VueRouter {
     }
   }
 
-  go (n: number) {
+  go(n: number) {
     this.history.go(n)
   }
 
-  back () {
+  back() {
     this.go(-1)
   }
 
-  forward () {
+  forward() {
     this.go(1)
   }
 
-  getMatchedComponents (to?: RawLocation | Route): Array<any> {
+  getMatchedComponents(to?: RawLocation | Route): Array<any> {
     const route: any = to
       ? to.matched
         ? to
@@ -216,7 +230,7 @@ export default class VueRouter {
     )
   }
 
-  resolve (
+  resolve(
     to: RawLocation,
     current?: Route,
     append?: boolean
@@ -229,6 +243,7 @@ export default class VueRouter {
     resolved: Route
   } {
     current = current || this.history.current
+    //   { _normalized: true,   path,  query,   hash}
     const location = normalizeLocation(to, current, append, this)
     const route = this.match(location, current)
     const fullPath = route.redirectedFrom || route.fullPath
@@ -244,7 +259,7 @@ export default class VueRouter {
     }
   }
 
-  addRoutes (routes: Array<RouteConfig>) {
+  addRoutes(routes: Array<RouteConfig>) {
     this.matcher.addRoutes(routes)
     if (this.history.current !== START) {
       this.history.transitionTo(this.history.getCurrentLocation())
@@ -252,7 +267,7 @@ export default class VueRouter {
   }
 }
 
-function registerHook (list: Array<any>, fn: Function): Function {
+function registerHook(list: Array<any>, fn: Function): Function {
   list.push(fn)
   return () => {
     const i = list.indexOf(fn)
@@ -260,11 +275,19 @@ function registerHook (list: Array<any>, fn: Function): Function {
   }
 }
 
-function createHref (base: string, fullPath: string, mode) {
+function createHref(base: string, fullPath: string, mode) {
   var path = mode === 'hash' ? '#' + fullPath : fullPath
   return base ? cleanPath(base + '/' + path) : path
 }
+/**
+ router  最重要的就是matcher 
+ matcher通过闭包 保存了由routes生成的路由表
+ router的match 也是在matcher内部保存，match则是通过 newMtacher的时候生成的路由表进行查询 生成route
+ 然后view组件内部读取route的matched获取到应该渲染的组件
 
+ 所以  new Router  的matcher进行替换，就完成了路由重置
+ addRoutes也是通过matcher的闭包内部加入的
+ */
 VueRouter.install = install
 VueRouter.version = '__VERSION__'
 VueRouter.isNavigationFailure = isNavigationFailure
