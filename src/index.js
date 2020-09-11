@@ -28,7 +28,7 @@ export default class VueRouter {
   static version: string
   static isNavigationFailure: Function
   static NavigationFailureType: any
-
+  // 一个路由可以多个Vue实例共同使用。所以有apps
   app: any
   apps: Array<any>
   ready: boolean
@@ -293,6 +293,7 @@ VueRouter.version = '__VERSION__'
 VueRouter.isNavigationFailure = isNavigationFailure
 VueRouter.NavigationFailureType = NavigationFailureType
 
+// 现在的库都这样   只要在浏览器环境  就直接挂载到Window上并直接自动注册Vue插件
 if (inBrowser && window.Vue) {
   window.Vue.use(VueRouter)
 }
